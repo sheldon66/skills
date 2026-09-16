@@ -1,6 +1,6 @@
 # BMAD Domain Workflow for ChatGPT
 
-Version: **0.2.0**
+Version: **0.2.1**
 
 This package adapts BMAD-style planning to ChatGPT and inserts a first-class, **layered Domain Design** phase:
 
@@ -29,7 +29,31 @@ The central rules are built in:
 
 > Long-lived domain semantics, current release restrictions, and technical reliability mechanisms must not be silently mixed into one model.
 
+> In an existing BMAD project, artifact paths come from the project and its BMAD configuration; the skill must not invent a parallel output tree.
+
 You no longer need to repeat those instructions in every architecture conversation.
+
+## What changed in 0.2.1
+
+0.2.1 adds **BMAD-aware artifact placement**.
+
+- Existing authoritative artifacts are updated in place by default.
+- The skill detects BMAD-enabled repositories before choosing output paths.
+- It respects configured `output_folder`, `planning_artifacts`, `implementation_artifacts`, and `project_knowledge` where available.
+- `_bmad-output` is treated as a common default, not a hardcoded universal location.
+- New layered Domain Design artifacts are planning artifacts; when no established domain location exists, they default to:
+
+```text
+{planning_artifacts}/domain-design/
+  strategic-domain-model.md
+  tactical-domain-model.md
+  release-<release>-domain-profile.md
+```
+
+- Brownfield updates preserve existing artifact locations unless migration is explicitly requested.
+- Non-BMAD repositories do not get a `_bmad-output/` directory merely because this skill is BMAD-compatible.
+
+See `references/artifact-location-protocol.md`.
 
 ## What changed in 0.2.0
 
@@ -77,13 +101,14 @@ If the Skills tab is not available:
 
 ## Recommended usage
 
-### Review an existing project
+### Review an existing BMAD project
 
 ```text
 /bmad-domain-review
-Read the PRD, strategic/tactical domain artifacts, release profile and architecture.
+Read the current BMAD project configuration and planning artifacts first.
+Review the PRD, strategic/tactical domain artifacts, release profile and architecture.
+Keep updates in the existing configured BMAD artifact locations.
 Check whether release restrictions or runtime-reliability mechanisms leaked into the long-lived domain model.
-Review only; do not modify files.
 ```
 
 ### Evolve domain design
@@ -94,6 +119,7 @@ The long-term product core is discovery → outreach → reply → conversion.
 Keep current MVP scope small.
 Separate the long-lived strategic model, tactical model and Release One profile.
 Do not model runtime reliability mechanisms as business Aggregates.
+Respect the project's existing BMAD planning-artifact location.
 ```
 
 ### Architecture
@@ -119,9 +145,42 @@ Reconcile epics against PRD + Strategic Domain + Tactical Domain + Release Profi
 Prepare the next implementation handoff for Codex.
 ```
 
+## BMAD artifact location behavior
+
+For an existing BMAD repository, path resolution uses this precedence:
+
+```text
+existing authoritative artifact location
+  > explicit user-specified path
+  > resolved BMAD configuration
+  > BMAD default
+  > non-BMAD fallback
+```
+
+The skill should resolve the current project's BMAD configuration where possible rather than assuming a fixed folder. BMAD commonly uses:
+
+```text
+{output_folder}/
+  planning-artifacts/
+  implementation-artifacts/
+```
+
+with project context and other workflow-specific outputs at configured locations. A project may configure a different output root, so `_bmad-output` is not hardcoded.
+
+For **new Domain Design artifacts** in a BMAD project with no established domain-design location:
+
+```text
+{planning_artifacts}/domain-design/
+  strategic-domain-model.md
+  tactical-domain-model.md
+  release-<release>-domain-profile.md
+```
+
+If the project already stores its domain model beside an architecture initiative or in another established planning directory, updates remain there unless the user asks for migration.
+
 ## Domain artifact structure
 
-For non-trivial projects, the preferred structure is:
+For non-trivial projects, the preferred semantic structure is:
 
 ```text
 strategic-domain-model.md
@@ -148,6 +207,8 @@ Small projects may combine domain documents, but the semantic layers must remain
 - Planning-first for Chat.
 - Domain Design is first-class, not an appendix to Architecture.
 - Strategic, Tactical and Release-profile semantics are separated by default.
+- BMAD repository configuration controls artifact roots when available.
+- Brownfield artifacts are updated in place by default.
 - Artifact language defaults to English; conversation defaults to Chinese.
 - Create / Update / Validate / Reconcile are supported.
 - MVP-first, but preserve known extension seams.
