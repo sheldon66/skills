@@ -17,7 +17,26 @@ The key extension is non-negotiable:
 
 > Existing domain design is a primary architecture input, not optional background material.
 
+Within Domain Design, keep long-lived business semantics, release-specific product choices, and technical realization separate by default.
+
 This skill is an original BMAD-compatible extension. It is not an official BMAD Method distribution and must not claim exact parity with the installed BMAD CLI version.
+
+## Governing domain-design principles
+
+Apply these principles throughout the workflow:
+
+1. **Model the business before the solution.** Separate Problem Space from Solution Space. Do not infer the domain from tables, services, UI pages, frameworks, workers, or deployment topology.
+2. **Strategic design precedes tactical design.** Establish capabilities, subdomains, Core/Supporting/Generic classification, ubiquitous language, bounded contexts, ownership, and context relationships before optimizing entities or repositories.
+3. **Boundaries before objects.** A bounded context is a semantic and authority boundary; an aggregate is a consistency boundary. Neither is created merely because a noun, table, or module exists.
+4. **Long-lived domain != current release.** A current MVP restriction is not automatically a permanent domain invariant. Put release-specific choices in a release/scope profile unless the business proves they are enduring rules.
+5. **Domain != application coordination != infrastructure.** Business decisions and invariants belong to Domain. Use-case orchestration belongs to Application. Runtime permits, manifests, fencing tokens, worker generations, transaction recovery, browser/process coordination, queues, databases, and similar mechanisms belong to Architecture/Infrastructure unless business people genuinely use them as business concepts.
+6. **Facts, intent, execution, and external outcome must remain distinguishable.** Do not collapse a business intent into its execution attempt or infer external success from local completion unless the business has reliable evidence.
+7. **Model only justified identity.** Use Entity/Aggregate identity only when continuity, independent lifecycle, referenceability, or consistency ownership requires it. Do not promote transient observations, derived intents, snapshots, or technical coordination records into Aggregates without evidence.
+8. **Design for known variability, not imagined variability.** Preserve stable seams for known next directions; document speculative possibilities without creating universal abstractions.
+9. **The model may simplify when requirements simplify.** Remove unnecessary Aggregates, identities, repositories, events, or cross-context machinery when the business no longer needs the behavior that justified them.
+10. **Architecture must conform to domain ownership, while reliability stays architectural.** Reliable dispatch, idempotency, recovery, concurrency, persistence, and fencing may be sophisticated without becoming business language.
+11. **Deferred is a valid decision.** If a question does not affect current correctness, record it with a revisit trigger instead of inventing a future answer.
+12. **Downstream artifacts must inherit the separation.** Epics and stories may reference release constraints and architecture mechanisms, but must not rewrite them as domain invariants.
 
 ## Default interaction contract
 
@@ -26,10 +45,34 @@ This skill is an original BMAD-compatible extension. It is not an official BMAD 
 - Preserve content when restructuring documents; do not silently shorten or delete material.
 - Prefer a minimal viable design now while protecting stable extension points for future scope.
 - Do not invent requirements simply to make a model look complete.
-- Ask questions only when an unresolved decision materially changes the model or architecture. Otherwise, state an assumption and continue.
-- Separate facts, user decisions, assumptions, recommendations, and open questions.
+- Ask questions only when an unresolved decision materially changes the model or architecture. Otherwise, state an assumption or mark a deferred decision and continue.
+- Separate facts, user decisions, assumptions, recommendations, release constraints, architecture mechanisms, and open questions.
 - When reviewing an existing artifact, critique first. Do not rewrite it unless the user asks to modify it.
 - Treat project files supplied by the user as the source of truth. Do not replace project-specific facts with generic BMAD or DDD advice.
+- Respect the host repository's artifact locations. In BMAD-enabled projects, resolve BMAD output paths before creating new planning artifacts.
+
+## Artifact-location invariant
+
+Load `references/artifact-location-protocol.md` whenever the workflow reads, creates, moves, or updates durable project artifacts.
+
+The core placement rules are:
+
+1. **Update existing authoritative artifacts in place** unless the user explicitly requests migration.
+2. **Honor explicit user paths** when they do not create a duplicate authority.
+3. **If `_bmad/` or another current BMAD installation is present, resolve the project's configured artifact roots before writing.** Prefer the project's config resolver when available; otherwise inspect current BMAD configuration and the existing artifact tree.
+4. Respect configured `output_folder`, `planning_artifacts`, `implementation_artifacts`, and `project_knowledge` where the installed BMAD version exposes them.
+5. **Do not hardcode `_bmad-output`.** `_bmad-output` is the common BMAD default, not a universal path.
+6. For a new layered Domain Design in a BMAD project with no existing domain-design location, prefer:
+
+```text
+{planning_artifacts}/domain-design/
+  strategic-domain-model.md
+  tactical-domain-model.md
+  release-<release>-domain-profile.md
+```
+
+7. If the project already keeps domain artifacts in an established planning location (for example beside an initiative architecture document), preserve that location and place new companions nearby when that minimizes churn.
+8. In a non-BMAD project, follow the repository's existing documentation convention; never create `_bmad-output/` merely because this skill is BMAD-compatible.
 
 ## Routing aliases
 
@@ -51,25 +94,32 @@ Natural-language requests should route to the same workflows automatically.
 ## First-turn activation
 
 1. Identify the user's requested outcome.
-2. Detect which artifacts are already present:
+2. Detect the host project shape before choosing paths:
+   - whether this is a BMAD-enabled repository (`_bmad/`, current BMAD configuration, or existing BMAD artifacts);
+   - existing authoritative artifact locations;
+   - resolved/configured planning and implementation roots where available.
+3. Detect which artifacts are already present:
    - product brief / raw requirements
    - PRD
-   - domain design
+   - strategic domain model
+   - tactical domain model
+   - release/scope domain profile
+   - legacy/composite domain design
    - architecture
    - UX/design artifacts
    - epics/stories
    - implementation artifacts
    - code/repository context
-3. Determine intent:
+4. Determine intent:
    - **Create**: artifact does not exist.
    - **Update**: artifact exists and the user wants changes.
    - **Validate**: review only.
    - **Reconcile**: multiple artifacts exist and may conflict.
-4. Route directly to the requested phase. Do not force the user to replay earlier phases when adequate inputs already exist.
-5. If a downstream phase is requested and an upstream artifact is missing, decide whether it is:
+5. Route directly to the requested phase. Do not force the user to replay earlier phases when adequate inputs already exist.
+6. If a downstream phase is requested and an upstream artifact is missing, decide whether it is:
    - **blocking**: architecture would be unsafe or arbitrary without it;
-   - **non-blocking**: continue with a clearly marked assumption.
-6. Give a short statement of the route you are taking, then begin.
+   - **non-blocking**: continue with a clearly marked assumption or deferred decision.
+7. Give a short statement of the route you are taking, then begin.
 
 ## Evidence hierarchy
 
@@ -86,7 +136,9 @@ Never treat a generic best practice as stronger evidence than an explicit projec
 
 ## Phase 1 — PRD
 
-Load `references/prd-protocol.md`.
+Load:
+- `references/prd-protocol.md`
+- `references/artifact-location-protocol.md`
 
 Goal: establish **what problem is being solved and what behavior/capabilities are required**, without prematurely deciding implementation details.
 
@@ -110,61 +162,133 @@ Do not push internal domain mechanics or transport details into the PRD unless t
 Load:
 - `references/domain-design-protocol.md`
 - `references/ddd-rules.md`
-- `templates/domain-design-template.md`
+- `references/artifact-location-protocol.md`
+- `templates/strategic-domain-model-template.md`
+- `templates/tactical-domain-model-template.md`
+- `templates/release-scope-profile-template.md`
 
-Domain design is a design contract between requirements and architecture.
+Use `templates/domain-design-template.md` only as a legacy/composite index or when the user explicitly requests one combined document.
 
-### Strategic design
+Domain design is a design contract between requirements and architecture. By default it produces **three distinct layers**.
 
-Identify:
+### Layer A — Strategic Domain Model
+
+Define long-lived business semantics:
+- problem-space business spine
 - business capabilities
 - subdomains: Core / Supporting / Generic
-- bounded contexts
-- context boundaries and ownership
-- upstream/downstream relationships
-- context map
 - ubiquitous language
-- cross-context contracts
-- external systems that require an Anti-Corruption Layer
+- bounded contexts
+- ownership and authority
+- upstream/downstream relationships
+- context map and relationship patterns
+- cross-context published language
+- external systems requiring ACLs
+- deferred strategic decisions
 
-### Tactical design
+Strategic design must remain understandable when current frameworks, databases, vendors, and deployment choices are removed.
+
+### Layer B — Tactical Domain Model
 
 For each relevant bounded context, model only what is justified:
 - aggregates and aggregate roots
 - entities
 - value objects
-- invariants
+- business invariants
 - commands
 - domain events
-- domain services
-- policies/process managers/sagas when coordination spans aggregates or time
+- domain services and pure domain policies
 - repositories at aggregate-root boundaries
 - factories only where creation rules justify them
 - integration events/contracts where context boundaries are crossed
+- business state machines
+
+For each candidate Aggregate ask:
+1. What invariant requires one consistency boundary?
+2. Does it have independent business identity/lifecycle?
+3. Will other business concepts refer to it independently?
+4. Is it merely a transient observation, derived intent, snapshot/value, query view, or technical control record?
+
+If the last answer is yes and the others are weak, do not promote it to an Aggregate.
+
+### Layer C — Release / Scope Domain Profile
+
+Capture choices that constrain the current release but are not proven permanent business truths:
+- active/inactive bounded contexts
+- supported platform/channel/source/action variants
+- fixed goals or policies
+- single-account/single-tenant restrictions
+- current lifecycle shortcuts such as create-and-start
+- current retry/attempt limits
+- fixed audience derivation rules
+- intentionally inactive future capabilities
+- release-only defaults and assumptions
+
+A profile rule must not silently become a long-lived invariant. If permanence is uncertain, mark it as a release constraint or deferred decision.
+
+### BMAD location behavior for domain artifacts
+
+In a BMAD-enabled project:
+
+- an existing domain artifact remains authoritative at its existing location unless migration is requested;
+- genuinely new layered domain artifacts are planning artifacts and belong under the configured `{planning_artifacts}` root;
+- when no project-specific domain location exists, use `{planning_artifacts}/domain-design/`;
+- never create a second authoritative domain model under `docs/` merely because the skill template lives there;
+- update companion/reference links so Architecture, SPEC, Epics/Stories, and readiness checks point to the current authoritative artifacts.
+
+### Explicit architecture boundary
+
+The following normally belong to Architecture/Application Coordination, not Domain Design:
+- runtime permits/tokens/leases
+- worker generations and fencing
+- action/execution materialization protocols
+- manifests used only to guarantee technical completeness
+- transaction commit/rollback/indeterminate semantics
+- crash/restart recovery protocol
+- queue, scheduler, process, browser, IPC, network, storage mechanics
+- observation acknowledgement protocol
+- concrete database, framework, SDK, vendor-response structures
+
+They may be referenced from Domain Design only to state a boundary, not modeled as business Aggregates/Entities unless the business independently recognizes them.
+
+### Event classification
+
+Do not call every event a Domain Event. Classify when useful:
+- **Domain Event** — business-significant fact inside a domain.
+- **Integration Event** — stable fact/contract published across a boundary.
+- **Application Coordination Event** — orchestration/progress signal used to drive a use case.
+- **Technical Event** — runtime, transport, persistence, worker, or infrastructure signal.
 
 ### Domain-design quality gates
 
 A domain design is not ready for architecture if any critical issue remains:
 - key business invariant has no owner
+- subdomain and bounded-context concepts are conflated without explanation
 - aggregate boundary is defined as an object graph instead of a consistency boundary
-- two bounded contexts directly share internal domain objects
-- infrastructure concepts are masquerading as domain concepts
+- an Aggregate exists mainly to solve persistence, scheduling, recovery, dispatch, or process-control mechanics
+- two bounded contexts directly share mutable internal domain objects
+- release-specific restrictions are written as permanent invariants without evidence
+- infrastructure/application concepts are masquerading as domain concepts
 - an external model leaks directly into the core domain where semantic translation is required
 - cross-aggregate strong consistency is assumed without justification
 - future extensibility is implemented as speculative abstraction rather than stable domain seams
+- local execution facts are mislabeled as external business outcomes without evidence
+- a previously justified Aggregate/identity remains after the requirement that justified it was removed
 
 ## Phase 3 — Architecture
 
 Load:
 - `references/architecture-protocol.md`
+- `references/artifact-location-protocol.md`
 - `templates/architecture-decision-template.md`
 
-Architecture MUST read the current domain design before making structural choices.
+Architecture MUST read the current strategic model, tactical model, and release/scope profile before making structural choices.
 
 For every major architecture decision, trace it to at least one of:
 - a PRD requirement
-- a domain boundary
-- a domain invariant
+- a strategic domain boundary
+- a tactical invariant
+- a release-profile constraint
 - an integration constraint
 - an NFR
 - an explicit operational constraint
@@ -176,6 +300,7 @@ Architecture should establish, as applicable:
 - module/service boundaries
 - data ownership
 - transaction boundaries
+- application orchestration and process managers
 - integration patterns
 - sync vs async communication
 - eventing strategy
@@ -184,6 +309,8 @@ Architecture should establish, as applicable:
 - API/contract strategy
 - consistency model
 - idempotency and concurrency controls
+- runtime permits/leases/fencing where needed
+- reliability, dispatch, crash/restart, and recovery protocols
 - security/privacy boundaries
 - observability
 - deployment topology
@@ -195,9 +322,11 @@ Prefer a modular monolith unless there is concrete evidence that distributed ser
 
 ## Phase 4 — Epics and Stories
 
-Load `references/epics-stories-protocol.md`.
+Load:
+- `references/epics-stories-protocol.md`
+- `references/artifact-location-protocol.md`
 
-Derive work from **PRD + Domain Design + Architecture**, not PRD alone.
+Derive work from **PRD + Strategic Domain Model + Tactical Domain Model + Release/Scope Profile + Architecture**, not PRD alone.
 
 Each epic should represent a coherent user/business capability or enabling technical slice with clear value.
 
@@ -208,27 +337,29 @@ Each implementation story should include enough design context to avoid rediscov
 - relevant domain concepts
 - affected bounded context(s)
 - invariants that must remain true
+- applicable release-profile constraints
 - architecture constraints
 - integration contracts
 - data ownership implications
 - testing notes
 - explicit out-of-scope items
 
-Avoid stories that cut across many bounded contexts merely because one UI flow spans them.
+Avoid stories that cut across many bounded contexts merely because one UI flow spans them. Do not restate architectural reliability mechanisms as domain rules in story acceptance criteria.
 
 ## Phase 5 — Readiness
 
 Load:
 - `references/readiness-checklist.md`
+- `references/artifact-location-protocol.md`
 - `templates/review-report-template.md`
 
 Check consistency in both directions:
 
-`PRD -> Domain Design -> Architecture -> Epics/Stories`
+`PRD -> Strategic Domain -> Tactical Domain -> Release Profile -> Architecture -> Epics/Stories`
 
 and
 
-`Epics/Stories -> Architecture -> Domain Design -> PRD`
+`Epics/Stories -> Architecture -> Release Profile -> Tactical Domain -> Strategic Domain -> PRD`
 
 Classify findings:
 - **Critical** — unsafe to implement; missing ownership, contradictory contract, broken invariant, or major requirement gap.
@@ -245,18 +376,22 @@ Do not use an overall numeric score. End with:
 
 ## Phase 6 — Implementation handoff
 
+Load `references/artifact-location-protocol.md` before deciding where a durable handoff belongs.
+
 This Chat skill is planning-first. It may prepare implementation context but should not pretend it modified a repository unless an appropriate tool actually did so.
 
 A handoff should contain:
 1. artifact set and versions reviewed
-2. approved domain boundaries
-3. approved architecture decisions
-4. story/epic to implement
-5. invariants and contracts that must not be violated
-6. files/modules likely affected if known
-7. tests/checks expected
-8. unresolved non-blocking questions
-9. instruction to stop and surface conflicts instead of silently redesigning the domain
+2. approved strategic boundaries and vocabulary
+3. approved tactical ownership/invariants
+4. applicable release-profile constraints
+5. approved architecture decisions
+6. story/epic to implement
+7. invariants and contracts that must not be violated
+8. files/modules likely affected if known
+9. tests/checks expected
+10. unresolved non-blocking questions
+11. instruction to stop and surface conflicts instead of silently redesigning the domain
 
 Use `templates/codex-handoff-template.md`.
 
@@ -264,16 +399,17 @@ Use `templates/codex-handoff-template.md`.
 
 Whenever `/bmad-architecture`, architecture review, epics/stories, or implementation readiness is invoked:
 
-1. Look for an existing domain design.
-2. If one exists, read and summarize its binding decisions before architecture reasoning.
-3. Treat these decisions as constraints unless the user explicitly asks to revise the domain model.
-4. If architecture requires changing them, create a **Domain Change Proposal** first:
-   - current decision
+1. Look for existing strategic, tactical, release-profile, or legacy domain-design artifacts.
+2. If they exist, read and summarize binding decisions by layer before architecture reasoning.
+3. Treat long-lived domain decisions and current release-profile constraints as different kinds of constraints.
+4. If architecture requires changing a strategic/tactical decision, create a **Domain Change Proposal** first:
+   - current decision and owning layer
    - conflict
    - proposed domain change
    - impact
    - alternatives
-5. Do not silently override the domain design.
+5. If architecture only requires a technical mechanism, keep it in Architecture; do not promote it into the domain model for convenience.
+6. Do not silently override the domain design.
 
 This permanently replaces the need for the user to repeat:
 
@@ -283,18 +419,24 @@ This permanently replaces the need for the user to repeat:
 
 When updating existing artifacts:
 
-1. Identify current decisions.
-2. Identify requested change.
-3. Calculate downstream impact.
-4. Change the smallest coherent set of artifacts.
-5. Preserve unaffected decisions.
-6. Produce a change summary:
+1. Resolve artifact ownership and location before writing; update existing authoritative files in place unless migration is part of the request.
+2. Identify current decisions and their owning layer.
+3. Identify requested change.
+4. Re-evaluate the business assumptions that originally justified affected Aggregates, identities, and events.
+5. Calculate downstream impact.
+6. Change the smallest coherent set of artifacts.
+7. Preserve unaffected decisions.
+8. Remove obsolete model complexity when its business justification no longer exists.
+9. Produce a change summary:
    - changed
    - unchanged
+   - moved to another layer
    - deprecated/replaced
+   - deferred
    - follow-up required
 
-For a domain change, inspect architecture and stories.
+For a strategic/tactical domain change, inspect release profile, architecture and stories.
+For a release-profile change, inspect architecture and stories without automatically changing long-lived domain semantics.
 For an architecture change, inspect stories.
 For a PRD change, inspect all downstream artifacts.
 
@@ -317,12 +459,22 @@ Prefer stable domain vocabulary, explicit boundaries, ports/adapters, and contra
 - Make traceability explicit when reconciling artifacts.
 - Avoid pseudo-precision.
 - Keep implementation details out of domain documents unless needed to explain a boundary or constraint.
+- Always apply `references/artifact-location-protocol.md` before choosing durable output paths.
+- For BMAD-enabled projects, planning artifacts must stay under the project's configured planning-artifacts root unless updating an already-authoritative artifact elsewhere or performing an explicit migration.
+- When a project is complex enough to justify separate artifacts, prefer these names within the resolved domain-design planning location:
+  - `strategic-domain-model.md`
+  - `tactical-domain-model.md`
+  - `release-one-domain-profile.md` or another release/scope-specific profile name
+  - architecture document(s) in the project's established architecture location
+- A small/simple project may combine strategic and tactical content, but must still visibly separate long-lived domain semantics from release constraints and architecture mechanisms.
 
 ## Completion behavior
 
 At the end of a workflow:
 1. summarize the decisions made;
 2. list unresolved blockers separately from deferred questions;
-3. name the artifact(s) that should change;
-4. suggest the next BMAD phase only when useful;
-5. never claim a file/repository was changed unless it actually was.
+3. name the artifact(s) that changed or should change, including their actual repository paths when known;
+4. identify any concepts moved between Domain, Application, Release Profile, and Architecture;
+5. state the resolved BMAD artifact roots when the project is BMAD-enabled and files were written;
+6. suggest the next BMAD phase only when useful;
+7. never claim a file/repository was changed unless it actually was.

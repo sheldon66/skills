@@ -1,79 +1,111 @@
 # Domain Design — <Project>
 
-## 1. Purpose and scope
+> Compatibility/composite template.
+>
+> For non-trivial projects, prefer three separate artifacts:
+>
+> - `strategic-domain-model.md`
+> - `tactical-domain-model.md`
+> - `release-<name>-domain-profile.md`
+>
+> Use this file as an index/summary, or as a single-file format only for a small project. Even in a single file, preserve the same semantic separation.
 
-## 2. Domain overview
+## 1. Authority and artifact map
 
-### 2.1 Business capabilities
+| Layer | Artifact | Owns |
+|---|---|---|
+| Strategic Domain | | Long-lived business spine, subdomains, ubiquitous language, bounded contexts, context relationships |
+| Tactical Domain | | Aggregates, Entities, Value Objects, invariants, Domain Events, business states |
+| Release / Scope Profile | | Current product slice and temporary restrictions |
+| Architecture | | Application coordination, persistence, reliability, runtime/infrastructure mechanisms |
 
-### 2.2 Subdomain classification
+## 2. Strategic Domain summary
 
-| Subdomain | Type | Why |
+### 2.1 Long-lived business spine
+
+### 2.2 Business capabilities
+
+### 2.3 Subdomain classification
+
+| Subdomain | Core / Supporting / Generic | Why |
 |---|---|---|
 
-## 3. Ubiquitous language
+### 2.4 Ubiquitous language
 
 | Term | Context | Meaning | Avoid/conflicts |
 |---|---|---|---|
 
-## 4. Bounded contexts
+### 2.5 Bounded contexts and ownership
 
-### <Context Name>
+| Context | Purpose | Owns | Does not own |
+|---|---|---|---|
 
-**Purpose**
-
-**Owns**
-
-**Does not own**
-
-**Key invariants**
-
-**Inbound contracts**
-
-**Outbound contracts**
-
-## 5. Context map
+### 2.6 Context map
 
 ```mermaid
 flowchart LR
-  A[Context A] -->|Contract| B[Context B]
+  A[Context A] -->|Published Language| B[Context B]
 ```
 
 | Upstream | Downstream | Relationship | Contract | ACL? |
 |---|---|---|---|---|
 
-## 6. Tactical model
+## 3. Tactical Domain summary
 
-### <Aggregate Name>
+| Context | Aggregate Root | Invariant/lifecycle justification |
+|---|---|---|
 
-**Aggregate root**
+### Important non-Aggregate concepts
 
-**Entities**
+List transient observations, Value Objects, snapshots, derived intents, query views, or application/runtime coordination records that must **not** be promoted into Aggregates.
 
-**Value objects**
+### Domain Services / Policies
 
-**Invariants**
+### Domain Events
 
-**Commands**
+### Integration Events / Published Language
 
-**Domain events**
+### Business state machines
 
-**Repository**
+## 4. Release / Scope Profile summary
 
-**Concurrency/consistency notes**
+| Variation axis | Current release choice | Long-lived invariant? |
+|---|---|---|
 
-## 7. Domain services / policies / process managers
+Include:
+- active/inactive contexts
+- platform/source/action variants
+- current lifecycle shortcuts
+- attempt/retry limits
+- audience/selection rules
+- account/tenant restrictions
+- current non-goals
+- deferred decisions
 
-## 8. External systems and ACLs
+## 5. Architecture boundary
 
-## 9. Known extension seams
+Explicitly list architecture-owned mechanisms so they do not leak back into the domain model.
 
-## 10. Deferred decisions
+Typical examples:
+- permits/leases/runtime slots
+- worker generations/fencing
+- technical manifests/materialization progress
+- Unit of Work/transaction protocol
+- crash/restart recovery
+- queue/scheduler/process/browser/IPC mechanics
+- database/vendor DTO details
 
-## 11. Domain decisions
+## 6. Deferred decisions
 
-| ID | Decision | Rationale | Status |
+| Decision | Owning layer | Why deferred | Revisit trigger |
 |---|---|---|---|
-| DD-001 | | | Proposed |
 
-## 12. Architecture constraints derived from the domain
+## 7. Domain decisions
+
+| ID | Layer | Decision | Rationale | Status |
+|---|---|---|---|---|
+| DD-001 | Strategic / Tactical / Release | | | Proposed |
+
+## 8. Architecture constraints derived from the domain
+
+Summarize what Architecture must preserve without prescribing the technical mechanism unless already decided.
