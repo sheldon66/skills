@@ -1,5 +1,14 @@
 # Implementation Readiness Checklist
 
+## Artifact location / project integration
+- [ ] If the repository is BMAD-enabled, BMAD configuration/output roots were resolved before writing.
+- [ ] Existing authoritative artifacts were updated in place unless migration was explicitly requested.
+- [ ] New planning artifacts are under the configured planning-artifacts root rather than a parallel ad-hoc tree.
+- [ ] `_bmad-output` was not hardcoded when the project config points elsewhere.
+- [ ] No duplicate authoritative PRD, Domain Model, Architecture, or Epics artifact was accidentally created.
+- [ ] Companion/source references point to the actual current artifact paths.
+- [ ] Non-BMAD projects were not given `_bmad-output/` merely because this skill is BMAD-compatible.
+
 ## PRD → Strategic Domain
 - [ ] The long-lived business problem/value spine is explicit.
 - [ ] Major capabilities are identified without deriving them from UI/database/service structure.
@@ -80,5 +89,6 @@ Report:
 5. Stable tactical decisions
 6. Current release-profile constraints
 7. Architecture-owned mechanisms
-8. Deferred decisions
-9. Recommended next workflow
+8. Artifact-location/configuration findings
+9. Deferred decisions
+10. Recommended next workflow
