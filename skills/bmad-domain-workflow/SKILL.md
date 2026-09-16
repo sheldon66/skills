@@ -49,6 +49,30 @@ Apply these principles throughout the workflow:
 - Separate facts, user decisions, assumptions, recommendations, release constraints, architecture mechanisms, and open questions.
 - When reviewing an existing artifact, critique first. Do not rewrite it unless the user asks to modify it.
 - Treat project files supplied by the user as the source of truth. Do not replace project-specific facts with generic BMAD or DDD advice.
+- Respect the host repository's artifact locations. In BMAD-enabled projects, resolve BMAD output paths before creating new planning artifacts.
+
+## Artifact-location invariant
+
+Load `references/artifact-location-protocol.md` whenever the workflow reads, creates, moves, or updates durable project artifacts.
+
+The core placement rules are:
+
+1. **Update existing authoritative artifacts in place** unless the user explicitly requests migration.
+2. **Honor explicit user paths** when they do not create a duplicate authority.
+3. **If `_bmad/` or another current BMAD installation is present, resolve the project's configured artifact roots before writing.** Prefer the project's config resolver when available; otherwise inspect current BMAD configuration and the existing artifact tree.
+4. Respect configured `output_folder`, `planning_artifacts`, `implementation_artifacts`, and `project_knowledge` where the installed BMAD version exposes them.
+5. **Do not hardcode `_bmad-output`.** `_bmad-output` is the common BMAD default, not a universal path.
+6. For a new layered Domain Design in a BMAD project with no existing domain-design location, prefer:
+
+```text
+{planning_artifacts}/domain-design/
+  strategic-domain-model.md
+  tactical-domain-model.md
+  release-<release>-domain-profile.md
+```
+
+7. If the project already keeps domain artifacts in an established planning location (for example beside an initiative architecture document), preserve that location and place new companions nearby when that minimizes churn.
+8. In a non-BMAD project, follow the repository's existing documentation convention; never create `_bmad-output/` merely because this skill is BMAD-compatible.
 
 ## Routing aliases
 
@@ -70,7 +94,11 @@ Natural-language requests should route to the same workflows automatically.
 ## First-turn activation
 
 1. Identify the user's requested outcome.
-2. Detect which artifacts are already present:
+2. Detect the host project shape before choosing paths:
+   - whether this is a BMAD-enabled repository (`_bmad/`, current BMAD configuration, or existing BMAD artifacts);
+   - existing authoritative artifact locations;
+   - resolved/configured planning and implementation roots where available.
+3. Detect which artifacts are already present:
    - product brief / raw requirements
    - PRD
    - strategic domain model
@@ -82,16 +110,16 @@ Natural-language requests should route to the same workflows automatically.
    - epics/stories
    - implementation artifacts
    - code/repository context
-3. Determine intent:
+4. Determine intent:
    - **Create**: artifact does not exist.
    - **Update**: artifact exists and the user wants changes.
    - **Validate**: review only.
    - **Reconcile**: multiple artifacts exist and may conflict.
-4. Route directly to the requested phase. Do not force the user to replay earlier phases when adequate inputs already exist.
-5. If a downstream phase is requested and an upstream artifact is missing, decide whether it is:
+5. Route directly to the requested phase. Do not force the user to replay earlier phases when adequate inputs already exist.
+6. If a downstream phase is requested and an upstream artifact is missing, decide whether it is:
    - **blocking**: architecture would be unsafe or arbitrary without it;
    - **non-blocking**: continue with a clearly marked assumption or deferred decision.
-6. Give a short statement of the route you are taking, then begin.
+7. Give a short statement of the route you are taking, then begin.
 
 ## Evidence hierarchy
 
@@ -108,7 +136,9 @@ Never treat a generic best practice as stronger evidence than an explicit projec
 
 ## Phase 1 — PRD
 
-Load `references/prd-protocol.md`.
+Load:
+- `references/prd-protocol.md`
+- `references/artifact-location-protocol.md`
 
 Goal: establish **what problem is being solved and what behavior/capabilities are required**, without prematurely deciding implementation details.
 
@@ -132,6 +162,7 @@ Do not push internal domain mechanics or transport details into the PRD unless t
 Load:
 - `references/domain-design-protocol.md`
 - `references/ddd-rules.md`
+- `references/artifact-location-protocol.md`
 - `templates/strategic-domain-model-template.md`
 - `templates/tactical-domain-model-template.md`
 - `templates/release-scope-profile-template.md`
@@ -195,6 +226,16 @@ Capture choices that constrain the current release but are not proven permanent 
 
 A profile rule must not silently become a long-lived invariant. If permanence is uncertain, mark it as a release constraint or deferred decision.
 
+### BMAD location behavior for domain artifacts
+
+In a BMAD-enabled project:
+
+- an existing domain artifact remains authoritative at its existing location unless migration is requested;
+- genuinely new layered domain artifacts are planning artifacts and belong under the configured `{planning_artifacts}` root;
+- when no project-specific domain location exists, use `{planning_artifacts}/domain-design/`;
+- never create a second authoritative domain model under `docs/` merely because the skill template lives there;
+- update companion/reference links so Architecture, SPEC, Epics/Stories, and readiness checks point to the current authoritative artifacts.
+
 ### Explicit architecture boundary
 
 The following normally belong to Architecture/Application Coordination, not Domain Design:
@@ -238,6 +279,7 @@ A domain design is not ready for architecture if any critical issue remains:
 
 Load:
 - `references/architecture-protocol.md`
+- `references/artifact-location-protocol.md`
 - `templates/architecture-decision-template.md`
 
 Architecture MUST read the current strategic model, tactical model, and release/scope profile before making structural choices.
@@ -280,7 +322,9 @@ Prefer a modular monolith unless there is concrete evidence that distributed ser
 
 ## Phase 4 — Epics and Stories
 
-Load `references/epics-stories-protocol.md`.
+Load:
+- `references/epics-stories-protocol.md`
+- `references/artifact-location-protocol.md`
 
 Derive work from **PRD + Strategic Domain Model + Tactical Domain Model + Release/Scope Profile + Architecture**, not PRD alone.
 
@@ -306,6 +350,7 @@ Avoid stories that cut across many bounded contexts merely because one UI flow s
 
 Load:
 - `references/readiness-checklist.md`
+- `references/artifact-location-protocol.md`
 - `templates/review-report-template.md`
 
 Check consistency in both directions:
@@ -330,6 +375,8 @@ Do not use an overall numeric score. End with:
 - recommended next action
 
 ## Phase 6 — Implementation handoff
+
+Load `references/artifact-location-protocol.md` before deciding where a durable handoff belongs.
 
 This Chat skill is planning-first. It may prepare implementation context but should not pretend it modified a repository unless an appropriate tool actually did so.
 
@@ -372,14 +419,15 @@ This permanently replaces the need for the user to repeat:
 
 When updating existing artifacts:
 
-1. Identify current decisions and their owning layer.
-2. Identify requested change.
-3. Re-evaluate the business assumptions that originally justified affected Aggregates, identities, and events.
-4. Calculate downstream impact.
-5. Change the smallest coherent set of artifacts.
-6. Preserve unaffected decisions.
-7. Remove obsolete model complexity when its business justification no longer exists.
-8. Produce a change summary:
+1. Resolve artifact ownership and location before writing; update existing authoritative files in place unless migration is part of the request.
+2. Identify current decisions and their owning layer.
+3. Identify requested change.
+4. Re-evaluate the business assumptions that originally justified affected Aggregates, identities, and events.
+5. Calculate downstream impact.
+6. Change the smallest coherent set of artifacts.
+7. Preserve unaffected decisions.
+8. Remove obsolete model complexity when its business justification no longer exists.
+9. Produce a change summary:
    - changed
    - unchanged
    - moved to another layer
@@ -411,11 +459,13 @@ Prefer stable domain vocabulary, explicit boundaries, ports/adapters, and contra
 - Make traceability explicit when reconciling artifacts.
 - Avoid pseudo-precision.
 - Keep implementation details out of domain documents unless needed to explain a boundary or constraint.
-- When a project is complex enough to justify separate artifacts, prefer:
+- Always apply `references/artifact-location-protocol.md` before choosing durable output paths.
+- For BMAD-enabled projects, planning artifacts must stay under the project's configured planning-artifacts root unless updating an already-authoritative artifact elsewhere or performing an explicit migration.
+- When a project is complex enough to justify separate artifacts, prefer these names within the resolved domain-design planning location:
   - `strategic-domain-model.md`
   - `tactical-domain-model.md`
   - `release-one-domain-profile.md` or another release/scope-specific profile name
-  - architecture document(s)
+  - architecture document(s) in the project's established architecture location
 - A small/simple project may combine strategic and tactical content, but must still visibly separate long-lived domain semantics from release constraints and architecture mechanisms.
 
 ## Completion behavior
@@ -423,7 +473,8 @@ Prefer stable domain vocabulary, explicit boundaries, ports/adapters, and contra
 At the end of a workflow:
 1. summarize the decisions made;
 2. list unresolved blockers separately from deferred questions;
-3. name the artifact(s) that should change;
+3. name the artifact(s) that changed or should change, including their actual repository paths when known;
 4. identify any concepts moved between Domain, Application, Release Profile, and Architecture;
-5. suggest the next BMAD phase only when useful;
-6. never claim a file/repository was changed unless it actually was.
+5. state the resolved BMAD artifact roots when the project is BMAD-enabled and files were written;
+6. suggest the next BMAD phase only when useful;
+7. never claim a file/repository was changed unless it actually was.
