@@ -1,0 +1,43 @@
+name: Bug report
+description: Report incorrect, ambiguous, or inconsistent skill behavior
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What happened?
+      description: Describe the behavior you observed and why it is incorrect or ambiguous.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: What should the skill have done instead?
+    validations:
+      required: true
+  - type: input
+    id: skill
+    attributes:
+      label: Skill and version
+      placeholder: bmad-domain-workflow 0.1.0
+    validations:
+      required: true
+  - type: dropdown
+    id: route
+    attributes:
+      label: Workflow route
+      options:
+        - Create
+        - Update
+        - Validate
+        - Reconcile
+        - Readiness
+        - Codex / implementation handoff
+        - Other
+  - type: textarea
+    id: context
+    attributes:
+      label: Minimal reproduction context
+      description: Provide a small prompt or artifact setup that reproduces the issue. Remove secrets and private data.
