@@ -1,0 +1,7 @@
+interface:
+  display_name: "BMAD Domain Workflow"
+  short_description: "Plan from PRD through domain design, architecture, stories, and Codex handoff."
+  default_prompt: "Review the current project's planning artifacts, route to the appropriate BMAD-compatible workflow, and preserve approved project decisions."
+
+policy:
+  allow_implicit_invocation: true
