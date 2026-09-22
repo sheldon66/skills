@@ -1,6 +1,6 @@
 ---
 name: bmad-domain-workflow
-description: BMAD-compatible product planning and solution-design workflow with Domain Design as a mandatory primary input to Architecture. Use when the user asks to create, update, review, validate, or reconcile a PRD, domain model, architecture, epics/stories, implementation-readiness plan, or BMAD planning artifacts.
+description: Create, update, review, validate, or reconcile software-planning artifacts using a BMAD-compatible workflow where Domain Design is a mandatory primary input to Architecture. Trigger for PRDs, domain models, architecture, epics/stories, implementation-readiness checks, and Codex implementation handoffs; do not trigger for implementation-only coding tasks that do not require planning-artifact work.
 ---
 
 # BMAD Domain Workflow
